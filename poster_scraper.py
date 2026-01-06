@@ -1,11 +1,16 @@
 import wikipedia
 
+def remove_supplemental_title_info(movie_title):
+    if "(" in movie_title:
+        movie_title = movie_title[:movie_title.find("(") - 1]
+    return movie_title
+
 def find_movie_match(articles, title, year):
     for article in articles:
         if f"{title.lower()} ({str(year)} film)" in article.lower():
             return article
     for article in articles:
-        if f"{title.lower()} (film)" in article.lower():
+        if f"{title.lower()} (film)" == article.lower():
             return article
     for article in articles:
         if title.lower() in article.lower() or "film" in article.lower() or str(year) in article.lower():
@@ -21,6 +26,7 @@ def check_percentage_of_word_matches(img_url, movie_title):
     return match_counter / len(title_words)
 
 def main(title, year):
+    title = remove_supplemental_title_info(title)
     try:
         articles = wikipedia.search(title, results=20)
     except Exception as e:
