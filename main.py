@@ -1,20 +1,29 @@
 import poster_scraper as ps
-from db_config import *
 
 import mysql.connector
 import streamlit as st
+import json
 from PIL import Image
 import random
+import socket
+
+def get_local_ip():
+    return str(socket.gethostbyname_ex(socket.gethostname())[-1][-1])
 
 def initialize_database():
     try:
+        with open("config.json", "r") as f:
+            config = json.load(f)
+    except FileNotFoundError:
+        st.error(f"Error opening JSON config file {f}")
+    try:
         mydb = mysql.connector.connect(
-            host=DB_HOST,
-            user=DB_USER,
-            passwd=DB_PASS,
-            port=DB_PORT,
+            host=config["host"],
+            user=config["user"],
+            passwd=config["pass"],
+            port=config["port"],
             connection_timeout=5,
-            database=DB_NAME
+            database=config["name"]
         )
     except Exception as e:
         st.error(f"MySQL connection error: {e}")
@@ -49,9 +58,13 @@ def show_movie_details(mydb, movie):
         st.write(f"Runtime: {movie[3]} m")
     st.write(f"Rating: {movie[4]}")
     st.subheader("Watch on:")
-    copies = sql_select_statement(mydb,f"SELECT DISTINCT F.Name FROM MediaCopy MC JOIN Format F ON F.FormatID = MC.FormatID JOIN MediaVideo MV ON MV.CopyID = MC.CopyID JOIN Video V ON V.VideoID = MV.VideoID WHERE V.Title = '{movie[1].replace("\'","\'\'")}'")
-    for format in copies:
+    formats = sql_select_statement(mydb,f"SELECT DISTINCT F.Name FROM mediacopy MC JOIN format F ON F.FormatID = MC.FormatID JOIN mediavideo MV ON MV.CopyID = MC.CopyID JOIN video V ON V.VideoID = MV.VideoID WHERE V.Title = '{movie[1].replace("\'","\'\'")}'")
+    for format in formats:
         st.image(Image.open(f"images/{format[0]}.png"),width=60)
+    st.subheader("Where to watch:")
+    copies = sql_select_statement(mydb,f"SELECT MC.CopyTitle, F.Name FROM mediacopy MC JOIN format F ON F.FormatID = MC.FormatID JOIN mediavideo MV ON MV.CopyID = MC.CopyID JOIN video V ON V.VideoID = MV.VideoID WHERE V.Title = '{movie[1].replace("\'", "\'\'")}'")
+    for copy in copies:
+        st.write(f"{copy[0]} [{copy[1]}]")
     if st.button("Back to search"):
         st.session_state.selected_movie = None
         st.session_state.search_submitted = False
@@ -61,9 +74,11 @@ def main():
     # Connect to database
     mydb = initialize_database()
 
-    db_size = int(sql_select_statement(mydb, "SELECT COUNT(*) FROM Video")[0][0])
+    db_size = int(sql_select_statement(mydb, "SELECT COUNT(*) FROM video")[0][0])
 
     st.header("Caleb's Movies")
+
+    st.write(f"Connect from LAN devices at http://{get_local_ip()}:8501")
 
     # Initialize session state
     if "selected_movie" not in st.session_state:
