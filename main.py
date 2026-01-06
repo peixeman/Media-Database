@@ -15,7 +15,7 @@ def initialize_database():
         with open("config.json", "r") as f:
             config = json.load(f)
     except FileNotFoundError:
-        st.error(f"Error opening JSON config file {f}")
+        st.error(f"Error opening JSON config file. Please try refreshing the page or restarting the application.")
     try:
         mydb = mysql.connector.connect(
             host=config["host"],
@@ -76,6 +76,8 @@ def main():
 
     db_size = int(sql_select_statement(mydb, "SELECT COUNT(*) FROM video")[0][0])
 
+    st.set_page_config(page_title="CM Browser")
+
     st.header("Caleb's Movies")
 
     st.write(f"Connect from LAN devices at http://{get_local_ip()}:8501")
@@ -102,7 +104,7 @@ def main():
         st.session_state.recommended_movie = None
 
     # Show all movies
-    if st.button("Show all movies"):
+    if st.button(f"Show all movies ({db_size})"):
         st.session_state.show_all = not st.session_state.show_all
 
     # User search input
