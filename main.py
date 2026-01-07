@@ -117,7 +117,7 @@ def main():
 
     if st.session_state.search_submitted and st.session_state.user_search:
         st.session_state.show_all = False
-        results = sql_select_statement(mydb, f"SELECT * FROM video WHERE TITLE LIKE '%{st.session_state.user_search.replace("\'","\'\'")}%' ORDER BY TITLE ASC")
+        results = sql_select_statement(mydb, f"SELECT * FROM video WHERE Title LIKE '%{st.session_state.user_search.replace("\'","\'\'")}%' ORDER BY CASE WHEN Title REGEXP '^(A|An|The)[[:space:]]' = 1 THEN TRIM(SUBSTR(Title, INSTR(Title,' '))) ELSE Title END")
         if not results:
             st.write("No results found")
             st.subheader("Other movies")
@@ -139,7 +139,7 @@ def main():
                     st.session_state.search_submitted = False
                     st.rerun()
     if st.session_state.show_all:
-        results = sql_select_statement(mydb,f"SELECT * FROM video ORDER BY TITLE ASC")
+        results = sql_select_statement(mydb,f"SELECT * FROM video ORDER BY CASE WHEN Title REGEXP '^(A|An|The)[[:space:]]' = 1 THEN TRIM(SUBSTR(Title, INSTR(Title,' '))) ELSE Title END")
         for movie in results:
             # Button to select movie
             button_key = f"all_select_{movie[0]}"
