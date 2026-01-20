@@ -42,25 +42,32 @@ def sql_select_statement(mydb, query):
 
 def runtime_to_hour_minutes(runtime):
     runtime = int(runtime)
-    hours = int(runtime // 60)
-    minutes = int(runtime % 60)
-    return f"{hours}h {minutes}m"
+    runtime_obj = {
+        "hours": int(runtime // 60),
+        "minutes": int(runtime % 60)
+    }
+    return runtime_obj
 
 def show_movie_details(mydb, movie):
     st.subheader(movie[1])
-    poster = ps.main(movie[1],movie[2].year)
+    poster = ps.main(movie[1],movie[2].year,movie[5])
     if poster:
-        st.image(poster)
+        st.image(poster,width=240)
     st.write(f"Year: {movie[2].year}")
-    if movie[3] >= 60:
-        st.write(f"Runtime: {movie[3]} m\t({runtime_to_hour_minutes(movie[3])})")
-    else:
+    if movie[3] < 60:
         st.write(f"Runtime: {movie[3]} m")
+    else:
+        runtime = runtime_to_hour_minutes(movie[3])
+        output_line = f"Runtime: {movie[3]} m\t({runtime["hours"]}h"
+        if runtime["minutes"] != 0:
+            output_line += f" {runtime["minutes"]}m"
+        output_line += f")"
+        st.write(output_line)
     st.write(f"Rating: {movie[4]}")
     st.subheader("Watch on:")
     formats = sql_select_statement(mydb,f"SELECT DISTINCT F.Name FROM mediacopy MC JOIN format F ON F.FormatID = MC.FormatID JOIN mediavideo MV ON MV.CopyID = MC.CopyID JOIN video V ON V.VideoID = MV.VideoID WHERE V.Title = '{movie[1].replace("\'","\'\'")}'")
-    for format in formats:
-        st.image(Image.open(f"images/{format[0]}.png"),width=60)
+    for video_format in formats:
+        st.image(Image.open(f"images/{video_format[0]}.png"),width=60)
     st.subheader("Where to watch:")
     copies = sql_select_statement(mydb,f"SELECT MC.CopyTitle, F.Name FROM mediacopy MC JOIN format F ON F.FormatID = MC.FormatID JOIN mediavideo MV ON MV.CopyID = MC.CopyID JOIN video V ON V.VideoID = MV.VideoID WHERE V.Title = '{movie[1].replace("\'", "\'\'")}'")
     for copy in copies:
