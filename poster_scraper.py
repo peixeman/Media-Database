@@ -1,4 +1,12 @@
+from PyMovieDb import IMDB
 import wikipedia
+import json
+
+def retrieve_poster_by_id(imdb_id):
+    imdb = IMDB()
+    json_str = imdb.get_by_id(f"tt{imdb_id}")
+    res = json.loads(json_str)
+    return res["poster"]
 
 def remove_supplemental_title_info(movie_title):
     if "(" in movie_title:
@@ -25,7 +33,12 @@ def check_percentage_of_word_matches(img_url, movie_title):
             match_counter += 1
     return match_counter / len(title_words)
 
-def main(title, year):
+def main(title, year, imdb_id):
+    if imdb_id:
+        try:
+            return retrieve_poster_by_id(imdb_id)
+        except Exception as e:
+            print(e)
     title = remove_supplemental_title_info(title)
     try:
         articles = wikipedia.search(title, results=20)
@@ -49,4 +62,4 @@ def main(title, year):
         return max(matches, key=lambda x: x[0])[1]
 
 if __name__ == "__main__":
-    main(title="",year="")
+    main(title="",year="",imdb_id="")
