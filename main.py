@@ -50,7 +50,7 @@ def runtime_to_hour_minutes(runtime):
 
 def show_movie_details(mydb, movie):
     st.subheader(movie[1])
-    poster = ps.main(movie[1],movie[2].year,movie[5])
+    poster = ps.main(movie[5])
     if poster:
         st.image(poster,width=240)
     st.write(f"Year: {movie[2].year}")
